@@ -1,18 +1,23 @@
-class Habit {
+import 'package:flutter/material.dart';
+import 'package:equatable/equatable.dart';
+
+class Habit extends Equatable {
   final String id;
   final String title;
   final String description;
   final bool isCompleted;
-  final double progress; // نسبة الإنجاز
-  final int streak; // الأيام المتتالية
+  final double progress;
+  final int streak;
+  final TimeOfDay? reminderTime; // ✅ أضفنا التذكير اليومي
 
-  Habit({
+  const Habit({
     required this.id,
     required this.title,
     required this.description,
-    this.isCompleted = false,
-    this.progress = 0.0,
-    this.streak = 0,
+    required this.isCompleted,
+    required this.progress,
+    required this.streak,
+    this.reminderTime, // ✅ اختياري
   });
 
   Habit copyWith({
@@ -22,6 +27,7 @@ class Habit {
     bool? isCompleted,
     double? progress,
     int? streak,
+    TimeOfDay? reminderTime,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -30,6 +36,18 @@ class Habit {
       isCompleted: isCompleted ?? this.isCompleted,
       progress: progress ?? this.progress,
       streak: streak ?? this.streak,
+      reminderTime: reminderTime ?? this.reminderTime,
     );
   }
+
+  @override
+  List<Object?> get props => [
+        id,
+        title,
+        description,
+        isCompleted,
+        progress,
+        streak,
+        reminderTime,
+      ];
 }

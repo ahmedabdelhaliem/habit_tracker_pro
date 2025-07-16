@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,8 +7,10 @@ import 'package:habit_tracker/bloc_observer.dart';
 import 'package:habit_tracker/config/route.dart';
 import 'package:habit_tracker/core/theme/app_theme_color.dart';
 import 'package:habit_tracker/core/utils/server_locater.dart';
+import 'package:habit_tracker/core/utils/widget/notifaction_service.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/presentation/manager/cubit/cubit/habit_cubit.dart';
+import 'package:habit_tracker/features/notifications/presentation/cubit/notification_cubit.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
@@ -14,18 +18,21 @@ void main() async {
 
   // مراقبة Bloc للتصحيح
   Bloc.observer = AppBlocObserver();
-
   // تهيئة Hive
   await Hive.initFlutter();
+
+  await NotificationServicee.init();
+  log('🔔 NotificationService Initialized');
+
   Hive.registerAdapter(HabitModelAdapter());
-  await Hive.deleteBoxFromDisk('habits');
+  // await Hive.deleteBoxFromDisk('habits'); // 🛑 امسح السطر ده بعد الاختبار
 
   await Hive.openBox<HabitModel>('habits');
-  
-
 
   // تهيئة DI
   await initDependencies();
+
+  // 🟢 Initialize NotificationService قبل تشغيل التطبيق
 
   runApp(const MyApp());
 }
@@ -42,7 +49,8 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MultiBlocProvider(
           providers: [
-            BlocProvider<HabitCubit>(create: (_) => sl<HabitCubit>()..loadHabits())
+            BlocProvider<HabitCubit>(create: (_) => sl<HabitCubit>()..loadHabits()),
+            BlocProvider(create: (_) => sl<NotificationCubit>()),
           ],
           child: MaterialApp.router(
             routerConfig: AppRouter.router,
@@ -66,7 +74,7 @@ class MyApp extends StatelessWidget {
               useMaterial3: true,
               colorSchemeSeed: Colors.teal,
               brightness: Brightness.dark,
-              extensions:  [
+              extensions: [
                 AppColorss(
                   cardBackground: Color(0xFF263238),
                   titleColor: Colors.white,

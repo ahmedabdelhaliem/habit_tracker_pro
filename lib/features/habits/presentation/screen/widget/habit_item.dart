@@ -26,16 +26,21 @@ class _HabitCardState extends State<HabitCard> with TickerProviderStateMixin {
 
     _progressAnimation = Tween<double>(
       begin: 0.0,
-      end: widget.habit.progress ?? 0.0,
+      end: widget.habit.progress.clamp(0.0, 1.0) ?? 0.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _controller.forward();
+      if (mounted && _controller.status != AnimationStatus.completed) {
+        _controller.forward();
+      }
     });
   }
 
   @override
   void dispose() {
+    if (_controller.isAnimating) {
+      _controller.stop();
+    }
     _controller.dispose();
     super.dispose();
   }
@@ -53,7 +58,6 @@ class _HabitCardState extends State<HabitCard> with TickerProviderStateMixin {
         child: InkWell(
           borderRadius: BorderRadius.circular(16.r),
           onTap: () {
-            // 👇 Open Details Screen instead of Edit directly
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text('View ${habit.title} Details!')));
@@ -78,14 +82,14 @@ class _HabitCardState extends State<HabitCard> with TickerProviderStateMixin {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 🎯 Circular Progress with Gradient
+                  // 🎯 Circular Progress
                   Stack(
                     alignment: Alignment.center,
                     children: [
                       CircularPercentIndicator(
                         radius: 35.r,
                         lineWidth: 6.w,
-                        percent: widget.habit.progress ?? 0.0,
+                        percent: (widget.habit.progress ?? 0.0).clamp(0.0, 1.0),
                         center: Text(
                           "${((widget.habit.progress ?? 0.0) * 100).toInt()}%",
                           style: TextStyle(
@@ -100,14 +104,6 @@ class _HabitCardState extends State<HabitCard> with TickerProviderStateMixin {
                         animationDuration: 700,
                       ),
 
-                      Text(
-                        "${((_progressAnimation.value) * 100).toInt()}%",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
                       if (habit.streak >= 3)
                         Positioned(
                           top: 0.h,
@@ -160,6 +156,23 @@ class _HabitCardState extends State<HabitCard> with TickerProviderStateMixin {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        SizedBox(height: 6.h),
+
+                        // ✅ Reminder Time (فقط لو موجود)
+                        if (habit.reminderTime != null)
+                          Row(
+                            children: [
+                              Icon(Icons.alarm, size: 16.sp, color: Colors.teal),
+                              SizedBox(width: 4.w),
+                              Text(
+                                "Reminder: ${habit.reminderTime!.format(context)}",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
